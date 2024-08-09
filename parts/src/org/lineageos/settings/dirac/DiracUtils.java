@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2018,2020 The LineageOS Project
+ * Copyright (C) 2018, 2020 The LineageOS Project
+ * Copyright (C) 2024 Paranoid Android
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,61 +25,99 @@ import android.preference.PreferenceManager;
 
 public final class DiracUtils {
 
-    protected static DiracSound mDiracSound;
+    private static DiracSound mDiracSound;
     private static boolean mInitialized;
     private static Context mContext;
 
+    private DiracUtils() {
+        // Private constructor to prevent instantiation
+    }
+
+    /**
+     * Initializes the DiracUtils with the provided context.
+     *
+     * @param context The application context.
+     */
     public static void initialize(Context context) {
         if (!mInitialized) {
             mContext = context;
             mDiracSound = new DiracSound(0, 0);
             mInitialized = true;
 
-            // Restore selected scene
+            // Restore selected scenario
             SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context);
-            String scene = sharedPrefs.getString(DiracSettingsFragment.PREF_SCENARIO, "0" /* None */);
+            String scene = sharedPrefs.getString(DiracSettingsFragment.PREF_SCENARIO, "0");
             setScenario(Integer.parseInt(scene));
         }
     }
 
+    /**
+     * Enables or disables the music enhancement.
+     *
+     * @param enable True to enable, false to disable.
+     */
     protected static void setMusic(boolean enable) {
-        if (enable) {
-            SystemProperties.set("persist.vendor.audio.misound.disable", "false");
-            mDiracSound.setMusic(1);
-        } else {
-            mDiracSound.setMusic(0);
-            SystemProperties.set("persist.vendor.audio.misound.disable", "true");
-        }
+        SystemProperties.set("persist.vendor.audio.misound.disable", Boolean.toString(!enable));
+        mDiracSound.setMusic(enable ? 1 : 0);
     }
 
+    /**
+     * Checks if Dirac music enhancement is enabled.
+     *
+     * @return True if enabled, false otherwise.
+     */
     protected static boolean isDiracEnabled() {
         return mDiracSound != null && mDiracSound.getMusic() == 1;
     }
 
+    /**
+     * Sets the equalizer levels based on the given preset.
+     *
+     * @param preset A comma-separated string of levels.
+     */
     protected static void setLevel(String preset) {
-        String[] level = preset.split("\\s*,\\s*");
-
-        for (int band = 0; band <= level.length - 1; band++) {
-            mDiracSound.setLevel(band, Float.valueOf(level[band]));
+        String[] levels = preset.split("\\s*,\\s*");
+        for (int band = 0; band < levels.length; band++) {
+            mDiracSound.setLevel(band, Float.parseFloat(levels[band]));
         }
     }
 
-    protected static void setHeadsetType(int paramInt) {
-        mDiracSound.setHeadsetType(paramInt);
+    /**
+     * Sets the headset type for the Dirac sound effect.
+     *
+     * @param type The headset type identifier.
+     */
+    protected static void setHeadsetType(int type) {
+        mDiracSound.setHeadsetType(type);
     }
 
+    /**
+     * Checks if HiFi mode is enabled.
+     *
+     * @return True if HiFi mode is enabled, false otherwise.
+     */
     protected static boolean getHifiMode() {
         AudioManager audioManager = mContext.getSystemService(AudioManager.class);
         return audioManager.getParameters("hifi_mode").contains("true");
     }
 
-    protected static void setHifiMode(int paramInt) {
+    /**
+     * Sets the HiFi mode.
+     *
+     * @param mode 1 to enable, 0 to disable.
+     */
+    protected static void setHifiMode(int mode) {
         AudioManager audioManager = mContext.getSystemService(AudioManager.class);
-        audioManager.setParameters("hifi_mode=" + (paramInt == 1 ? true : false));
-        mDiracSound.setHifiMode(paramInt);
+        audioManager.setParameters("hifi_mode=" + (mode == 1));
+        mDiracSound.setHifiMode(mode);
     }
 
-    protected static void setScenario(int paramInt) {
-        mDiracSound.setScenario(paramInt);
+    /**
+     * Sets the current scenario for the Dirac sound effect.
+     *
+     * @param scenario The scenario identifier.
+     */
+    protected static void setScenario(int scenario) {
+        mDiracSound.setScenario(scenario);
     }
 }
