@@ -120,6 +120,7 @@ BOARD_KERNEL_PAGESIZE := 4096
 BOARD_RAMDISK_OFFSET := 0x01000000
 
 TARGET_KERNEL_ADDITIONAL_FLAGS := DTC_EXT=$(shell pwd)/prebuilts/misc/$(HOST_OS)-x86/dtc/dtc
+USE_KERNEL_AOSP_LLVM := true
 KERNEL_DEFCONFIG := umi_defconfig
 
 # Kernel additional flags
